@@ -15,6 +15,7 @@ import net.zithium.deluxecoinflip.config.Messages;
 import net.zithium.deluxecoinflip.economy.EconomyManager;
 import net.zithium.deluxecoinflip.economy.provider.EconomyProvider;
 import net.zithium.deluxecoinflip.game.CoinflipGame;
+import net.zithium.deluxecoinflip.storage.PlayerData;
 import net.zithium.deluxecoinflip.utility.ItemStackBuilder;
 import net.zithium.deluxecoinflip.utility.TextUtil;
 import org.bukkit.Bukkit;
@@ -27,11 +28,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class GameBuilderGUI {
@@ -232,11 +229,19 @@ public class GameBuilderGUI {
             String formatted = NumberFormat.getNumberInstance(Locale.US).format(amount);
 
             if (cfg.getBoolean("settings.broadcast-coinflip-creation")) {
-                Messages.COINFLIP_CREATED_BROADCAST.broadcast(
-                        "{PLAYER}", player.getName(),
-                        "{CURRENCY}", provider.getDisplayName(),
-                        "{AMOUNT}", formatted
-                );
+                Bukkit.getOnlinePlayers().forEach(onlinePlayer -> {
+                    Optional<PlayerData> playerDataOptional = plugin.getStorageManager().getPlayer(onlinePlayer.getUniqueId());
+
+                    if (playerDataOptional.isPresent()) {
+                        PlayerData playerData = playerDataOptional.get();
+                        if (playerData.isDisplayBroadcastMessages()) {
+                            Messages.COINFLIP_CREATED_BROADCAST.send(onlinePlayer,
+                                    "{PLAYER}", player.getName(),
+                                    "{CURRENCY}", provider.getDisplayName(),
+                                    "{AMOUNT}", formatted);
+                        }
+                    }
+                });
             }
 
             Messages.CREATED_GAME.send(
