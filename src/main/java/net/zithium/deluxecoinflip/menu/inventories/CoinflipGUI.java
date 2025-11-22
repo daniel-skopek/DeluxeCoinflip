@@ -231,12 +231,12 @@ public class CoinflipGUI implements Listener {
                 }
 
                 if (game.isActiveGame()) {
-                    scheduler.runTaskLaterAtEntity(targetPlayer, this, 10L);
+                    scheduler.runTaskLater(this, 10L);
                 }
             }
         }
 
-        scheduler.runTaskAtEntity(targetPlayer, new AnimationLoop());
+        scheduler.runTask(new AnimationLoop());
     }
 
     private void updatePlayerStats(StorageManager storageManager, OfflinePlayer player, long winAmount, long beforeTax, boolean isWinner) {

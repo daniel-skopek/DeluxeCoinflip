@@ -23,8 +23,6 @@ import net.zithium.deluxecoinflip.game.GameManager;
 import net.zithium.deluxecoinflip.hook.DiscordHook;
 import net.zithium.deluxecoinflip.hook.PlaceholderAPIHook;
 import net.zithium.deluxecoinflip.listener.PlayerChatListener;
-import net.zithium.deluxecoinflip.listener.game.ActiveGameQuitListener;
-import net.zithium.deluxecoinflip.listener.game.GameQuitListener;
 import net.zithium.deluxecoinflip.menu.DupeProtection;
 import net.zithium.deluxecoinflip.menu.InventoryManager;
 import net.zithium.deluxecoinflip.storage.PlayerData;
@@ -146,8 +144,6 @@ public class DeluxeCoinflipPlugin extends FoliaWrappedJavaPlugin implements Delu
         );
 
         new PlayerChatListener(this);
-        new ActiveGameQuitListener(this);
-        new GameQuitListener(this);
 
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new PlaceholderAPIHook(this).register();
