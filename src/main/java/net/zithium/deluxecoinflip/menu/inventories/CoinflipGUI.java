@@ -32,7 +32,11 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.logging.Level;
 
 public class CoinflipGUI implements Listener {
@@ -45,6 +49,7 @@ public class CoinflipGUI implements Listener {
     private final boolean taxEnabled;
     private final double taxRate;
     private final long minimumBroadcastWinnings;
+    private static final int ANIMATION_COUNT_THRESHOLD = 12;
 
     public CoinflipGUI(@NotNull DeluxeCoinflipPlugin plugin) {
         this.plugin = plugin;
@@ -93,7 +98,7 @@ public class CoinflipGUI implements Listener {
 
     public void startAnimation(WrappedScheduler scheduler, Gui gui, GuiItem winnerHead, GuiItem loserHead,
                                OfflinePlayer winner, OfflinePlayer loser, CoinflipGame game,
-                               Player targetPlayer, SecureRandom random, boolean isWinnerThread, int animationCountThreshold) {
+                               Player targetPlayer, SecureRandom random, boolean isWinnerThread) {
 
         List<ItemStack> animationItems = new ArrayList<>();
         FileConfiguration cfg = plugin.getConfigHandler(ConfigType.CONFIG).getConfig();
@@ -136,7 +141,7 @@ public class CoinflipGUI implements Listener {
                     return;
                 }
 
-                if (state.count++ >= animationCountThreshold) {
+                if (state.count++ >= ANIMATION_COUNT_THRESHOLD) {
                     gui.setItem(13, winnerHead);
                     gui.getFiller().fill(new GuiItem(Material.LIGHT_BLUE_STAINED_GLASS_PANE));
                     gui.disableAllInteractions();

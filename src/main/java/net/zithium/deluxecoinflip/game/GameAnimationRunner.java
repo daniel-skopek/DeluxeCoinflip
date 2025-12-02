@@ -51,14 +51,12 @@ public record GameAnimationRunner(DeluxeCoinflipPlugin plugin) {
         Player winnerPlayer = Bukkit.getPlayer(winner.getUniqueId());
         Player loserPlayer = Bukkit.getPlayer(loser.getUniqueId());
 
-        int animationCountThreshold = random.nextInt(5) + 5;
-
         if (winnerPlayer != null) {
             scheduler.runTaskAtEntity(winnerPlayer, () -> {
                 winnerGui.open(winnerPlayer);
                 plugin.getInventoryManager().getCoinflipGUI().startAnimation(
                         scheduler, winnerGui, winnerHead, loserHead,
-                        winner, loser, game, winnerPlayer, random, true, animationCountThreshold
+                        winner, loser, game, winnerPlayer, random, true
                 );
             });
         }
@@ -68,7 +66,7 @@ public record GameAnimationRunner(DeluxeCoinflipPlugin plugin) {
                 loserGui.open(loserPlayer);
                 plugin.getInventoryManager().getCoinflipGUI().startAnimation(
                         scheduler, loserGui, winnerHead, loserHead,
-                        winner, loser, game, loserPlayer, random, false, animationCountThreshold
+                        winner, loser, game, loserPlayer, random, false
                 );
             });
         }
