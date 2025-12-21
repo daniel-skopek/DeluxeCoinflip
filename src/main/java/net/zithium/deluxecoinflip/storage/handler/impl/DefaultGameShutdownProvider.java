@@ -49,17 +49,10 @@ public record DefaultGameShutdownProvider(DeluxeCoinflipPlugin plugin) implement
             final Set<UUID> participants = collectParticipants(activeCache, game);
             activeCache.unregister(game);
 
-            final EconomyProvider provider = plugin.getEconomyManager().getEconomyProvider(game.getProvider());
-            if (provider == null) {
-                removeListingAndStorage(game.getPlayerUUID());
-                continue;
-            }
-
             final long amount = game.getAmount();
-            final String amountFormatted = NumberFormat.getNumberInstance(Locale.US).format(amount);
 
             for (UUID participantId : participants) {
-                refundPlayer(provider, participantId, amount, amountFormatted, game.getProvider());
+                saveRefundForLater(participantId, amount, game.getProvider());
             }
 
             removeListingAndStorage(game.getPlayerUUID());
@@ -84,16 +77,9 @@ public record DefaultGameShutdownProvider(DeluxeCoinflipPlugin plugin) implement
                 continue;
             }
 
-            final EconomyProvider provider = plugin.getEconomyManager().getEconomyProvider(game.getProvider());
-            if (provider == null) {
-                removeListingAndStorage(creatorId);
-                continue;
-            }
-
             final long amount = game.getAmount();
-            final String amountFormatted = NumberFormat.getNumberInstance(Locale.US).format(amount);
 
-            refundPlayer(provider, creatorId, amount, amountFormatted, game.getProvider());
+            saveRefundForLater(creatorId, amount, game.getProvider());
             removeListingAndStorage(creatorId);
         }
     }
@@ -114,28 +100,21 @@ public record DefaultGameShutdownProvider(DeluxeCoinflipPlugin plugin) implement
         return participants;
     }
 
-    private void refundPlayer(EconomyProvider provider, UUID playerId,
-                              long amount, String amountFormatted, String providerIdentifier) {
-
-        if (playerId == null) {
+    private void saveRefundForLater(UUID playerUUID, long amount, String providerIdentifier) {
+        if (playerUUID == null) {
             return;
         }
 
-        final Player online = plugin.getServer().getPlayer(playerId);
-        if (online != null) {
-            Messages.GAME_REFUNDED.send(online, "{AMOUNT}", amountFormatted, "{CURRENCY}", providerIdentifier);
-        }
-
-        final OfflinePlayer offline = plugin.getServer().getOfflinePlayer(playerId);
-        provider.deposit(offline, amount);
+        plugin.getStorageManager().getStorageHandler().savePendingRefund(playerUUID, providerIdentifier, amount);
+        plugin.getLogger().info("Saved pending refund: " + amount + " " + providerIdentifier + " for player " + playerUUID);
     }
 
-    private void removeListingAndStorage(UUID creatorId) {
-        if (creatorId == null) {
+    private void removeListingAndStorage(UUID creatorUUID) {
+        if (creatorUUID == null) {
             return;
         }
 
-        plugin.getGameManager().removeCoinflipGame(creatorId);
-        plugin.getStorageManager().getStorageHandler().deleteCoinflip(creatorId);
+        plugin.getGameManager().removeCoinflipGame(creatorUUID);
+        plugin.getStorageManager().getStorageHandler().deleteCoinflip(creatorUUID);
     }
 }

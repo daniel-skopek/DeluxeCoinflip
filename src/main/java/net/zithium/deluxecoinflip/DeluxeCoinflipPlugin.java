@@ -28,13 +28,16 @@ import net.zithium.deluxecoinflip.menu.InventoryManager;
 import net.zithium.deluxecoinflip.storage.PlayerData;
 import net.zithium.deluxecoinflip.storage.StorageManager;
 import net.zithium.deluxecoinflip.storage.handler.GameShutdownProvider;
+import net.zithium.deluxecoinflip.storage.handler.StorageHandler;
 import net.zithium.deluxecoinflip.storage.handler.impl.DefaultGameShutdownProvider;
 import net.zithium.deluxecoinflip.utility.ItemStackBuilder;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
+import java.text.NumberFormat;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
@@ -108,6 +111,8 @@ public class DeluxeCoinflipPlugin extends FoliaWrappedJavaPlugin implements Delu
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
+
+        processPendingRefunds();
 
         discordHook = new DiscordHook(this);
         
@@ -247,5 +252,47 @@ public class DeluxeCoinflipPlugin extends FoliaWrappedJavaPlugin implements Delu
     @Override
     public Optional<PlayerData> getPlayerData(Player player) {
         return storageManager.getPlayer(player.getUniqueId());
+    }
+
+    private void processPendingRefunds() {
+        getLogger().info("Checking for pending refunds...");
+
+        List<StorageHandler.PendingRefund> refunds = storageManager.getStorageHandler().getPendingRefunds();
+
+        if (refunds.isEmpty()) {
+            getLogger().info("No pending refunds found.");
+            return;
+        }
+
+        getLogger().info("Processing " + refunds.size() + " pending refunds...");
+        NumberFormat formatter = NumberFormat.getNumberInstance(Locale.US);
+        int processed = 0;
+        int failed = 0;
+
+        for (StorageHandler.PendingRefund refund : refunds) {
+            EconomyProvider provider = economyManager.getEconomyProvider(refund.provider());
+
+            if (provider == null) {
+                getLogger().warning("Economy provider '" + refund.provider() + "' not found for refund to " + refund.playerUUID());
+                failed++;
+                continue;
+            }
+
+            OfflinePlayer player = getServer().getOfflinePlayer(refund.playerUUID());
+            provider.deposit(player, refund.amount());
+
+            Player online = player.getPlayer();
+            if (online != null && online.isOnline()) {
+                String amountFormatted = formatter.format(refund.amount());
+                Messages.GAME_REFUNDED.send(online,
+                        "{AMOUNT}", amountFormatted,
+                        "{CURRENCY}", refund.provider());
+            }
+
+            storageManager.getStorageHandler().deletePendingRefund(refund.playerUUID());
+            processed++;
+        }
+
+        getLogger().info("Refunds complete: " + processed + " processed, " + failed + " failed");
     }
 }

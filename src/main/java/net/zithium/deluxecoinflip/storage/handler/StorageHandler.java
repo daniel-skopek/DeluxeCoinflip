@@ -9,6 +9,7 @@ import net.zithium.deluxecoinflip.DeluxeCoinflipPlugin;
 import net.zithium.deluxecoinflip.game.CoinflipGame;
 import net.zithium.deluxecoinflip.storage.PlayerData;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -70,4 +71,26 @@ public interface StorageHandler {
      * @return the coinflip game, or {@code null} if not found
      */
     CoinflipGame getCoinflipGame(final UUID uuid);
+
+    /**
+     * Saves a pending refund to be processed on next server startup
+     */
+    void savePendingRefund(UUID playerUUID, String provider, long amount);
+
+    /**
+     * Gets all pending refunds from the database
+     */
+    List<PendingRefund> getPendingRefunds();
+
+    /**
+     * Deletes a pending refund after it has been processed
+     */
+    void deletePendingRefund(UUID playerUUID);
+
+    /**
+     * Clears all pending refunds (after processing)
+     */
+    void clearAllPendingRefunds();
+
+    public record PendingRefund(UUID playerUUID, String provider, long amount) {}
 }

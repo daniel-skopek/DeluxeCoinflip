@@ -19,10 +19,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Level;
 
 public class SQLiteHandler implements StorageHandler {
@@ -126,6 +123,12 @@ public class SQLiteHandler implements StorageHandler {
                     "provider VARCHAR(255)," +
                     "amount BIGINT);";
             statement.execute(createGamesTable);
+
+            String createPendingRefundsTable = "CREATE TABLE IF NOT EXISTS pending_refunds (" +
+                    "uuid VARCHAR(255) NOT NULL PRIMARY KEY, " +
+                    "provider VARCHAR(255) NOT NULL, " +
+                    "amount BIGINT NOT NULL);";
+            statement.execute(createPendingRefundsTable);
         } catch (SQLException e) {
             plugin.getLogger().log(Level.SEVERE, "Error occurred while creating database tables.", e);
         }
@@ -239,6 +242,63 @@ public class SQLiteHandler implements StorageHandler {
         } catch (SQLException e) {
             plugin.getLogger().log(Level.SEVERE, "Error occurred while attempting to get a coinflip game.", e);
             return null;
+        }
+    }
+
+    @Override
+    public void savePendingRefund(UUID playerUUID, String provider, long amount) {
+        String sql = "INSERT INTO pending_refunds (uuid, provider, amount) VALUES (?, ?, ?);";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, playerUUID.toString());
+            ps.setString(2, provider);
+            ps.setLong(3, amount);
+            ps.execute();
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE,"Error saving pending refund for " + playerUUID, e);
+        }
+    }
+
+    @Override
+    public List<PendingRefund> getPendingRefunds() {
+        List<PendingRefund> refunds = new ArrayList<>();
+        String sql = "SELECT uuid, provider, amount FROM pending_refunds;";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                refunds.add(new PendingRefund(
+                        UUID.fromString(rs.getString("uuid")),
+                        rs.getString("provider"),
+                        rs.getLong("amount")
+                ));
+            }
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Error fetching pending refunds", e);
+        }
+        return refunds;
+    }
+
+    @Override
+    public void deletePendingRefund(UUID playerUUID) {
+        String sql = "DELETE FROM pending_refunds WHERE uuid = ?;";
+        try (Connection conn = getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, playerUUID.toString());
+            ps.execute();
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Error deleting pending refund: " + playerUUID, e);
+        }
+    }
+
+    @Override
+    public void clearAllPendingRefunds() {
+        String sql = "DELETE FROM pending_refunds;";
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+        } catch (SQLException e) {
+            plugin.getLogger().log(Level.SEVERE, "Error clearing pending refunds", e);
         }
     }
 }
