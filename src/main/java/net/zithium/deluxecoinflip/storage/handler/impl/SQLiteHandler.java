@@ -125,7 +125,8 @@ public class SQLiteHandler implements StorageHandler {
             statement.execute(createGamesTable);
 
             String createPendingRefundsTable = "CREATE TABLE IF NOT EXISTS pending_refunds (" +
-                    "uuid VARCHAR(255) NOT NULL PRIMARY KEY, " +
+                    "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
+                    "uuid VARCHAR(255) NOT NULL, " +
                     "provider VARCHAR(255) NOT NULL, " +
                     "amount BIGINT NOT NULL);";
             statement.execute(createPendingRefundsTable);
