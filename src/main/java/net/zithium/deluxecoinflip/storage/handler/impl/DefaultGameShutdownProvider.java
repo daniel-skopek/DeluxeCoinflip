@@ -106,7 +106,7 @@ public record DefaultGameShutdownProvider(DeluxeCoinflipPlugin plugin) implement
         }
 
         plugin.getStorageManager().getStorageHandler().savePendingRefund(playerUUID, providerIdentifier, amount);
-        plugin.getLogger().info("Saved pending refund: " + amount + " " + providerIdentifier + " for player " + playerUUID);
+        plugin.getLogger().info("Saved pending refund for server shutdown: " + amount + " " + providerIdentifier + " for player " + playerUUID);
     }
 
     private void removeListingAndStorage(UUID creatorUUID) {
@@ -114,7 +114,7 @@ public record DefaultGameShutdownProvider(DeluxeCoinflipPlugin plugin) implement
             return;
         }
 
-        plugin.getGameManager().removeCoinflipGame(creatorUUID);
+        plugin.getGameManager().removeCoinflipGame(creatorUUID, false);
         plugin.getStorageManager().getStorageHandler().deleteCoinflip(creatorUUID);
     }
 }

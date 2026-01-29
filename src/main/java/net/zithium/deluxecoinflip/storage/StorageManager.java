@@ -6,16 +6,20 @@
 package net.zithium.deluxecoinflip.storage;
 
 import net.zithium.deluxecoinflip.DeluxeCoinflipPlugin;
+import net.zithium.deluxecoinflip.economy.provider.EconomyProvider;
 import net.zithium.deluxecoinflip.exception.InvalidStorageHandlerException;
+import net.zithium.deluxecoinflip.game.CoinflipGame;
 import net.zithium.deluxecoinflip.storage.handler.StorageHandler;
 import net.zithium.deluxecoinflip.storage.handler.impl.SQLiteHandler;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -84,7 +88,39 @@ public class StorageManager implements Listener {
         plugin.getScheduler().runTaskAsynchronously(() -> {
             PlayerData data = storageHandler.getPlayer(uuid);
             playerDataMap.put(uuid, data);
+
+            processPendingRefunds(uuid);
         });
+    }
+
+    private void processPendingRefunds(UUID playerUUID) {
+        try {
+            List<StorageHandler.PendingRefund> pendingRefunds = storageHandler.getPendingRefunds();
+            List<StorageHandler.PendingRefund> playerRefunds = pendingRefunds.stream()
+                .filter(refund -> refund.playerUUID().equals(playerUUID))
+                .toList();
+                
+            if (playerRefunds.isEmpty()) {
+                return;
+            }
+
+            storageHandler.deletePendingRefund(playerUUID);
+            
+            for (StorageHandler.PendingRefund refund : playerRefunds) {
+                EconomyProvider provider = plugin.getEconomyManager().getEconomyProvider(refund.provider());
+
+                if (provider != null) {
+                    OfflinePlayer player = plugin.getServer().getOfflinePlayer(playerUUID);
+                    provider.deposit(player, refund.amount());
+                    plugin.getLogger().info("Processed pending refund from server shutdown: " + refund.amount() + " " + refund.provider() + " for player " + playerUUID);
+                } else {
+                    plugin.getLogger().warning("Economy provider '" + refund.provider() + "' not found for pending refund to player " + playerUUID);
+                    storageHandler.savePendingRefund(playerUUID, refund.provider(), refund.amount());
+                }
+            }
+        } catch (Exception ex) {
+            plugin.getLogger().warning("Failed to process pending refunds for player " + playerUUID + ": " + ex.getMessage());
+        }
     }
 
     public void savePlayerData(PlayerData player, boolean removeCache) {
@@ -112,6 +148,13 @@ public class StorageManager implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
-        getPlayer(event.getPlayer().getUniqueId()).ifPresent(data -> savePlayerData(data, true));
+        UUID playerUUID = event.getPlayer().getUniqueId();
+
+        CoinflipGame game = plugin.getGameManager().getCoinflipGame(playerUUID);
+        if (game != null && !game.isActiveGame()) {
+            plugin.getGameManager().removeCoinflipGame(playerUUID);
+        }
+        
+        getPlayer(playerUUID).ifPresent(data -> savePlayerData(data, true));
     }
 }

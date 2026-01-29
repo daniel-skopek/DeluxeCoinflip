@@ -6,7 +6,10 @@
 package net.zithium.deluxecoinflip.game;
 
 import net.zithium.deluxecoinflip.DeluxeCoinflipPlugin;
+import net.zithium.deluxecoinflip.economy.provider.EconomyProvider;
 import net.zithium.deluxecoinflip.storage.StorageManager;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -46,7 +49,17 @@ public class GameManager {
      * @param uuid The UUID of the player removing the game
      */
     public void removeCoinflipGame(@NotNull UUID uuid) {
-        coinflipGames.remove(uuid);
+        removeCoinflipGame(uuid, true);
+    }
+
+    /**
+     * Delete an existing coinflip game with option to control refunding
+     *
+     * @param uuid The UUID of the player removing the game
+     * @param shouldRefund Whether to refund the player (false when game is being joined)
+     */
+    public void removeCoinflipGame(@NotNull UUID uuid, boolean shouldRefund) {
+        CoinflipGame game = coinflipGames.remove(uuid);
 
         if (!plugin.isEnabled()) {
             try {
@@ -58,6 +71,10 @@ public class GameManager {
             return;
         }
 
+        if (game != null && !game.isActiveGame() && shouldRefund) {
+            refundPlayer(game);
+        }
+
         plugin.getScheduler().runTaskAsynchronously(() -> {
             try {
                 storageManager.getStorageHandler().deleteCoinflip(uuid);
@@ -67,11 +84,24 @@ public class GameManager {
         });
     }
 
-    /**
-     * Get all coinflip games
-     *
-     * @return Map of UUID and CoinflipGame object
-     */
+    private void refundPlayer(CoinflipGame game) {
+        try {
+            EconomyProvider provider = plugin.getEconomyManager().getEconomyProvider(game.getProvider());
+            if (provider == null) {
+                plugin.getLogger().warning("Economy provider '" + game.getProvider() + "' not found for refund to player " + game.getPlayerUUID());
+                return;
+            }
+
+            OfflinePlayer player = Bukkit.getOfflinePlayer(game.getPlayerUUID());
+            provider.deposit(player, game.getAmount());
+            
+            plugin.getLogger().info("Refunded " + game.getAmount() + " " + game.getProvider() + " to player " + game.getPlayerUUID() + " for cancelled game");
+        } catch (Exception ex) {
+            plugin.getLogger().warning("Failed to refund player " + game.getPlayerUUID() + " for cancelled game: " + ex.getMessage());
+            storageManager.getStorageHandler().savePendingRefund(game.getPlayerUUID(), game.getProvider(), game.getAmount());
+        }
+    }
+
     public Map<UUID, CoinflipGame> getCoinflipGames() {
         return coinflipGames;
     }

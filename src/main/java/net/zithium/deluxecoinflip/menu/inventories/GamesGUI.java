@@ -163,28 +163,31 @@ public class GamesGUI {
 
                 GuiItem gameItem = new GuiItem(gameDisplayItem);
                 gameItem.setAction(events -> {
-                    if (!gameManager.getCoinflipGames().containsKey(creatorOnline.getUniqueId())) {
+                    CoinflipGame selectedGame = gameManager.getCoinflipGames().remove(creatorOnline.getUniqueId());
+                    if (selectedGame == null) {
                         Messages.ERROR_GAME_UNAVAILABLE.send(player);
                         plugin.getScheduler().runTaskAtEntity(player, () -> openInventory(player));
                         return;
                     }
 
                     if (player.getUniqueId().equals(creatorOnline.getUniqueId())) {
+                        gameManager.getCoinflipGames().put(creatorOnline.getUniqueId(), selectedGame);
                         Messages.ERROR_COINFLIP_SELF.send(player);
                         plugin.getScheduler().runTaskAtEntity(player, () -> gui.close(player));
                         return;
                     }
 
-                    CoinflipGame selectedGame = gameManager.getCoinflipGames().get(creatorOnline.getUniqueId());
                     EconomyProvider selectedProvider = economyManager.getEconomyProvider(selectedGame.getProvider());
                     if (selectedProvider == null) {
+                        gameManager.getCoinflipGames().put(creatorOnline.getUniqueId(), selectedGame);
                         Messages.INVALID_CURRENCY.send(player);
                         return;
                     }
 
                     if (selectedProvider.getBalance(player) < selectedGame.getAmount()) {
+                        gameManager.getCoinflipGames().put(creatorOnline.getUniqueId(), selectedGame);
+                        
                         ItemStack previousItem = events.getCurrentItem();
-
                         playConfiguredSound(player);
 
                         ConfigurationSection noFundsSection = config.getConfigurationSection("games-gui.error-no-funds");
@@ -202,7 +205,6 @@ public class GamesGUI {
                     }
 
                     selectedProvider.withdraw(player, selectedGame.getAmount());
-                    gameManager.removeCoinflipGame(creatorOnline.getUniqueId());
 
                     plugin.getScheduler().runTaskAtEntity(player, () -> {
                         events.getWhoClicked().closeInventory();
