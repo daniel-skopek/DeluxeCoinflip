@@ -55,7 +55,7 @@ public class GameBuilderGUI {
         gui.setCloseGuiAction(event -> {
             Player p = (Player) event.getPlayer();
             if (!suppressReturn.remove(p.getUniqueId())) {
-                plugin.getScheduler().runTaskAtEntity(p, () -> plugin.getInventoryManager().getGamesGUI().openInventory(p));
+                plugin.getServer().getRegionScheduler().run(plugin, p.getLocation(), task -> plugin.getInventoryManager().getGamesGUI().openInventory(p));
             }
         });
 
@@ -65,7 +65,7 @@ public class GameBuilderGUI {
         setupCustomAmount(gui, player, game, cfg);
         setupCreateGame(gui, player, game, cfg);
 
-        plugin.getScheduler().runTaskAtEntity(player, () -> gui.open(player));
+        plugin.getServer().getRegionScheduler().run(plugin, player.getLocation(), task -> gui.open(player));
     }
 
     private void setFillerItems(Gui gui, FileConfiguration cfg) {
@@ -174,7 +174,7 @@ public class GameBuilderGUI {
                 ItemStackBuilder.getItemStack(section).build(),
                 event -> {
                     suppressReturn.add(player.getUniqueId());
-                    plugin.getScheduler().runTaskAtEntity(player, () -> gui.close(player));
+                    plugin.getServer().getRegionScheduler().run(plugin, player.getLocation(), task -> gui.close(player));
                     plugin.getListenerCache().put(player.getUniqueId(), game);
                     Messages.ENTER_VALUE_FOR_GAME.send(
                             player,
@@ -215,7 +215,7 @@ public class GameBuilderGUI {
             }
 
             suppressReturn.add(player.getUniqueId());
-            plugin.getScheduler().runTaskAtEntity(player, () -> gui.close(player));
+            plugin.getServer().getRegionScheduler().run(plugin, player.getLocation(), task -> gui.close(player));
 
             CoinflipCreatedEvent createdEvent = new CoinflipCreatedEvent(player, game);
             Bukkit.getPluginManager().callEvent(createdEvent);
@@ -322,7 +322,7 @@ public class GameBuilderGUI {
         ConfigurationSection errorSection = cfg.getConfigurationSection(configPath);
         if (errorSection != null) {
             clicked.setItem(event.getSlot(), ItemStackBuilder.getItemStack(errorSection).build());
-            plugin.getScheduler().runTaskLater(() -> {
+            plugin.getServer().getGlobalRegionScheduler().runDelayed(plugin, task -> {
                 if (event.getSlot() >= 0 && event.getSlot() < clicked.getSize()) {
                     clicked.setItem(event.getSlot(), original);
                 }

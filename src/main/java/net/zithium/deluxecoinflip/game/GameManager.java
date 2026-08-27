@@ -36,7 +36,7 @@ public class GameManager {
      */
     public void addCoinflipGame(UUID uuid, CoinflipGame game) {
         coinflipGames.put(uuid, game);
-        plugin.getScheduler().runTaskAsynchronously(() -> storageManager.getStorageHandler().saveCoinflip(game));
+        plugin.getServer().getAsyncScheduler().runNow(plugin, task -> storageManager.getStorageHandler().saveCoinflip(game));
     }
 
     /**
@@ -75,7 +75,7 @@ public class GameManager {
             refundPlayer(game);
         }
 
-        plugin.getScheduler().runTaskAsynchronously(() -> {
+        plugin.getServer().getAsyncScheduler().runNow(plugin, task -> {
             try {
                 storageManager.getStorageHandler().deleteCoinflip(uuid);
             } catch (Exception ex) {

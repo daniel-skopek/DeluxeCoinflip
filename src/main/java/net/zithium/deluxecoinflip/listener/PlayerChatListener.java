@@ -63,7 +63,7 @@ public record PlayerChatListener(DeluxeCoinflipPlugin plugin) implements Listene
                 event.setCancelled(true);
                 plugin.getListenerCache().invalidate(uuid);
                 Messages.CHAT_CANCELLED.send(player);
-                plugin.getScheduler().runTask(() -> plugin.getInventoryManager().getGameBuilderGUI().openGameBuilderGUI(player, game));
+                plugin.getServer().getGlobalRegionScheduler().run(plugin, task -> plugin.getInventoryManager().getGameBuilderGUI().openGameBuilderGUI(player, game));
                 return;
             }
 
@@ -96,7 +96,7 @@ public record PlayerChatListener(DeluxeCoinflipPlugin plugin) implements Listene
             plugin.getListenerCache().invalidate(uuid);
             game.setAmount(amount);
 
-            plugin.getScheduler().runTask(() -> plugin.getInventoryManager().getGameBuilderGUI().openGameBuilderGUI(player, game));
+            plugin.getServer().getGlobalRegionScheduler().run(plugin, task -> plugin.getInventoryManager().getGameBuilderGUI().openGameBuilderGUI(player, game));
         }
     }
 
@@ -128,7 +128,7 @@ public record PlayerChatListener(DeluxeCoinflipPlugin plugin) implements Listene
                 event.setCancelled(true);
                 plugin.getListenerCache().invalidate(uuid);
                 Messages.CHAT_CANCELLED.send(player);
-                plugin.getScheduler().runTask(() -> plugin.getInventoryManager().getGameBuilderGUI().openGameBuilderGUI(player, game));
+                plugin.getServer().getGlobalRegionScheduler().run(plugin, task -> plugin.getInventoryManager().getGameBuilderGUI().openGameBuilderGUI(player, game));
                 return;
             }
 
@@ -161,7 +161,7 @@ public record PlayerChatListener(DeluxeCoinflipPlugin plugin) implements Listene
             plugin.getListenerCache().invalidate(uuid);
             game.setAmount(amount);
 
-            plugin.getScheduler().runTask(() -> plugin.getInventoryManager().getGameBuilderGUI().openGameBuilderGUI(player, game));
+            plugin.getServer().getGlobalRegionScheduler().run(plugin, task -> plugin.getInventoryManager().getGameBuilderGUI().openGameBuilderGUI(player, game));
         }
     }
 }

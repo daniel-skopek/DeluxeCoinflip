@@ -73,7 +73,7 @@ public class CustomCurrencyProvider extends EconomyProvider {
 
     private void executeCommand(String command) {
         ConsoleCommandSender console = Bukkit.getServer().getConsoleSender();
-        plugin.getScheduler().runTask(() -> Bukkit.dispatchCommand(console, command));
+        plugin.getServer().getGlobalRegionScheduler().run(plugin, task -> Bukkit.dispatchCommand(console, command));
     }
 
     private static String getNameOrUuid(OfflinePlayer player) {

@@ -8,7 +8,6 @@ package net.zithium.deluxecoinflip;
 import co.aikar.commands.PaperCommandManager;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import me.nahu.scheduler.wrapper.FoliaWrappedJavaPlugin;
 import net.zithium.deluxecoinflip.api.CustomStatManager;
 import net.zithium.deluxecoinflip.api.DeluxeCoinflipAPI;
 import net.zithium.deluxecoinflip.cache.ActiveGamesCache;
@@ -36,6 +35,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.text.NumberFormat;
 import java.util.EnumMap;
@@ -47,7 +47,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
-public class DeluxeCoinflipPlugin extends FoliaWrappedJavaPlugin implements DeluxeCoinflipAPI {
+public class DeluxeCoinflipPlugin extends JavaPlugin implements DeluxeCoinflipAPI {
 
     private static final int BSTATS_PLUGIN_ID = 20887;
 

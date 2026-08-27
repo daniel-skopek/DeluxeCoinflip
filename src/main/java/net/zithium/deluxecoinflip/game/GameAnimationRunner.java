@@ -7,7 +7,6 @@ package net.zithium.deluxecoinflip.game;
 
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
-import me.nahu.scheduler.wrapper.WrappedScheduler;
 import net.zithium.deluxecoinflip.DeluxeCoinflipPlugin;
 import net.zithium.deluxecoinflip.config.ConfigType;
 import net.zithium.deluxecoinflip.utility.ItemStackBuilder;
@@ -30,8 +29,6 @@ public record GameAnimationRunner(DeluxeCoinflipPlugin plugin) {
     public void runAnimation(OfflinePlayer winner, OfflinePlayer loser, CoinflipGame game,
                              Gui winnerGui, Gui loserGui, SecureRandom random) {
 
-        WrappedScheduler scheduler = plugin.getScheduler();
-
         boolean creatorIsWinner = winner.getUniqueId().equals(game.getPlayerUUID());
 
         ItemStack winnerStack = buildConfiguredPlayerItem(
@@ -52,20 +49,20 @@ public record GameAnimationRunner(DeluxeCoinflipPlugin plugin) {
         Player loserPlayer = Bukkit.getPlayer(loser.getUniqueId());
 
         if (winnerPlayer != null) {
-            scheduler.runTaskAtEntity(winnerPlayer, () -> {
+            plugin.getServer().getRegionScheduler().run(plugin, winnerPlayer.getLocation(), task -> {
                 winnerGui.open(winnerPlayer);
                 plugin.getInventoryManager().getCoinflipGUI().startAnimation(
-                        scheduler, winnerGui, winnerHead, loserHead,
+                        winnerGui, winnerHead, loserHead,
                         winner, loser, game, winnerPlayer, random, true
                 );
             });
         }
 
         if (loserPlayer != null) {
-            scheduler.runTaskAtEntity(loserPlayer, () -> {
+            plugin.getServer().getRegionScheduler().run(plugin, loserPlayer.getLocation(), task -> {
                 loserGui.open(loserPlayer);
                 plugin.getInventoryManager().getCoinflipGUI().startAnimation(
-                        scheduler, loserGui, winnerHead, loserHead,
+                        loserGui, winnerHead, loserHead,
                         winner, loser, game, loserPlayer, random, false
                 );
             });

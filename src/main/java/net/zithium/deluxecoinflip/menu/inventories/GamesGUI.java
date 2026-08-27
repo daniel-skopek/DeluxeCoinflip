@@ -91,7 +91,7 @@ public class GamesGUI {
                 return;
             }
 
-            plugin.getScheduler().runTaskLaterAtEntity(player, () -> {
+            plugin.getServer().getRegionScheduler().runDelayed(plugin, player.getLocation(), task -> {
                 try {
                     if (!player.isOnline()) {
                         return;
@@ -166,14 +166,14 @@ public class GamesGUI {
                     CoinflipGame selectedGame = gameManager.getCoinflipGames().remove(creatorOnline.getUniqueId());
                     if (selectedGame == null) {
                         Messages.ERROR_GAME_UNAVAILABLE.send(player);
-                        plugin.getScheduler().runTaskAtEntity(player, () -> openInventory(player));
+                        plugin.getServer().getRegionScheduler().run(plugin, player.getLocation(), task -> openInventory(player));
                         return;
                     }
 
                     if (player.getUniqueId().equals(creatorOnline.getUniqueId())) {
                         gameManager.getCoinflipGames().put(creatorOnline.getUniqueId(), selectedGame);
                         Messages.ERROR_COINFLIP_SELF.send(player);
-                        plugin.getScheduler().runTaskAtEntity(player, () -> gui.close(player));
+                        plugin.getServer().getRegionScheduler().run(plugin, player.getLocation(), task -> gui.close(player));
                         return;
                     }
 
@@ -193,7 +193,7 @@ public class GamesGUI {
                         ConfigurationSection noFundsSection = config.getConfigurationSection("games-gui.error-no-funds");
                         if (noFundsSection != null && events.getClickedInventory() != null) {
                             events.getClickedInventory().setItem(events.getSlot(), ItemStackBuilder.getItemStack(noFundsSection).build());
-                            plugin.getScheduler().runTaskLater(() -> {
+                            plugin.getServer().getGlobalRegionScheduler().runDelayed(plugin, task -> {
                                 if (events.getClickedInventory() != null) {
                                     events.getClickedInventory().setItem(events.getSlot(), previousItem);
                                 }
@@ -206,7 +206,7 @@ public class GamesGUI {
 
                     selectedProvider.withdraw(player, selectedGame.getAmount());
 
-                    plugin.getScheduler().runTaskAtEntity(player, () -> {
+                    plugin.getServer().getRegionScheduler().run(plugin, player.getLocation(), task -> {
                         events.getWhoClicked().closeInventory();
                         plugin.getInventoryManager().getCoinflipGUI().startGame(creatorOnline, player, selectedGame);
                     });
@@ -227,9 +227,9 @@ public class GamesGUI {
             }
         }
 
-        plugin.getScheduler().runTaskAtEntity(player, () -> gui.open(player));
+        plugin.getServer().getRegionScheduler().run(plugin, player.getLocation(), task -> gui.open(player));
 
-        plugin.getScheduler().runTaskLaterAtEntity(player, () -> {
+        plugin.getServer().getRegionScheduler().runDelayed(plugin, player.getLocation(), task -> {
             if (player.getOpenInventory().getTopInventory().equals(gui.getInventory())) {
                 gui.update();
             }

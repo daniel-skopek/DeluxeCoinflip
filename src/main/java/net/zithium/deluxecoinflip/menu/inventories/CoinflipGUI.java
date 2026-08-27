@@ -7,7 +7,6 @@ package net.zithium.deluxecoinflip.menu.inventories;
 
 import dev.triumphteam.gui.guis.Gui;
 import dev.triumphteam.gui.guis.GuiItem;
-import me.nahu.scheduler.wrapper.WrappedScheduler;
 import net.kyori.adventure.text.Component;
 import net.zithium.deluxecoinflip.DeluxeCoinflipPlugin;
 import net.zithium.deluxecoinflip.api.events.CoinflipCompletedEvent;
@@ -96,7 +95,7 @@ public class CoinflipGUI implements Listener {
         return gui;
     }
 
-    public void startAnimation(WrappedScheduler scheduler, Gui gui, GuiItem winnerHead, GuiItem loserHead,
+    public void startAnimation(Gui gui, GuiItem winnerHead, GuiItem loserHead,
                                OfflinePlayer winner, OfflinePlayer loser, CoinflipGame game,
                                Player targetPlayer, SecureRandom random, boolean isWinnerThread) {
 
@@ -133,7 +132,7 @@ public class CoinflipGUI implements Listener {
             @Override
             public void run() {
                 if (!game.isActiveGame()) {
-                    scheduler.runTaskLaterAtEntity(targetPlayer, () -> {
+                    plugin.getServer().getRegionScheduler().runDelayed(plugin, targetPlayer.getLocation(), task -> {
                         if (targetPlayer.isOnline()) {
                             targetPlayer.closeInventory();
                         }
@@ -149,7 +148,7 @@ public class CoinflipGUI implements Listener {
 
                     if (targetPlayer.isOnline()) {
                         playConfiguredSound(targetPlayer, "coinflip-gui.sounds.animation_complete", Sound.ENTITY_PLAYER_LEVELUP);
-                        scheduler.runTaskLaterAtEntity(targetPlayer, () -> {
+                        plugin.getServer().getRegionScheduler().runDelayed(plugin, targetPlayer.getLocation(), task -> {
                             if (targetPlayer.isOnline()) {
                                 targetPlayer.closeInventory();
                             }
@@ -170,7 +169,7 @@ public class CoinflipGUI implements Listener {
                     if (isWinnerThread) {
                         long providedWinAmount = finalWinAmount;
 
-                        scheduler.runTask(() -> {
+                        plugin.getServer().getGlobalRegionScheduler().run(plugin, task -> {
                             if (!game.isActiveGame()) {
                                 return;
                             }
@@ -231,12 +230,12 @@ public class CoinflipGUI implements Listener {
                 }
 
                 if (game.isActiveGame()) {
-                    scheduler.runTaskLater(this, 10L);
+                    plugin.getServer().getRegionScheduler().runDelayed(plugin, targetPlayer.getLocation(), task -> this.run(), 10L);
                 }
             }
         }
 
-        scheduler.runTask(new AnimationLoop());
+        plugin.getServer().getRegionScheduler().run(plugin, targetPlayer.getLocation(), task -> new AnimationLoop().run());
     }
 
     private void updatePlayerStats(StorageManager storageManager, OfflinePlayer player, long winAmount, long beforeTax, boolean isWinner) {
